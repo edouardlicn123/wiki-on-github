@@ -11,7 +11,7 @@
   --success: #4ade80;
   --warn: #fbbf24;
   --danger: #f87171;
-  --sidebar-w: 280px;
+  --sidebar-w: 380px;
   --topbar-h: 48px;
   --statusbar-h: 24px;
 }
@@ -177,14 +177,23 @@ select:focus, input:focus { border-color: var(--accent); }
   font-size: 13px;
   color: var(--text);
   display: flex;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.file-list li > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .file-list li:hover { background: var(--bg); }
 .file-list li.empty { cursor: default; color: var(--text-dim); font-size: 12px; }
 .file-list li.empty:hover { background: transparent; }
 .file-list li.active { background: var(--accent); color: #fff; }
-.file-list li .meta { font-size: 11px; color: var(--text-dim); }
+.file-list li .meta { flex-shrink: 0; font-size: 11px; color: var(--text-dim); }
 .file-list li.active .meta { color: rgba(255,255,255,.7); }
 
 /* Front Matter 表单 */

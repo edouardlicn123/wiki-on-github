@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog Editor</title>
+<link rel="stylesheet" href="/static/vendor/codemirror.min.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="progress" class="hidden"><i></i></div>
+  <header id="topbar">
+    <div id="brand-block">
+      <span id="brand">📝</span>
+      <span id="brand-sub">Blog Editor</span>
+    </div>
+    <div class="topbar-group">
+      <label for="blog-select" class="label" data-i18n="lang.label">博客</label>
+      <select id="blog-select" data-i18n-title="lang.refresh"></select>
+      <button id="btn-refresh" class="btn" data-i18n-title="lang.refresh">↻</button>
+      <button id="btn-create" class="btn btn-cta" data-i18n="lang.create">+ 创建博客</button>
+    </div>
+    <div class="topbar-group">
+      <button id="btn-save" class="btn" data-i18n="lang.save">保存</button>
+      <button id="btn-new-post" class="btn" data-i18n="lang.newPost">+ 新建文章</button>
+    </div>
+    <div class="topbar-group">
+      <button id="btn-pull" class="btn" data-i18n="lang.pull">Pull</button>
+      <button id="btn-push" class="btn" data-i18n="lang.push">Push</button>
+      <button id="btn-build" class="btn" data-i18n="lang.build">转换为网页</button>
+    </div>
+    <div class="topbar-group" style="margin-left:auto">
+      <button id="btn-lang" class="btn">中文 / EN</button>
+    </div>
+  </header>
+
+  <main id="layout">
+    <aside id="sidebar">
+      <div id="no-blog-hint" class="hint hidden">
+        <p><strong data-i18n="lang.noBlog">暂无博客</strong></p>
+        <p data-i18n="lang.noBlogHint">在同级目录下 git clone 仓库，然后点「创建博客」。</p>
+      </div>
+
+      <div id="blog-info" class="hidden">
+        <div class="info-row"><strong data-i18n="lang.blog">博客</strong><span id="info-name">—</span></div>
+        <div class="info-row"><strong data-i18n="lang.repo">仓库</strong><span id="info-url">—</span></div>
+        <div class="info-row"><strong data-i18n="lang.path">路径</strong><span id="info-path">—</span></div>
+      </div>
+
+      <div id="post-list-group" class="hidden">
+        <div class="side-title">
+          <span data-i18n="lang.postList">文章列表</span>
+          <input type="text" id="post-search" class="post-search" data-i18n-placeholder="lang.search" placeholder="搜索…">
+          <select id="post-sort" class="post-sort" data-i18n-title="lang.sort" title="排序">
+            <option value="name-asc" data-i18n="lang.sortNameAsc">名称 A→Z</option>
+            <option value="name-desc" data-i18n="lang.sortNameDesc">名称 Z→A</option>
+            <option value="date-desc" data-i18n="lang.sortDateDesc">修改时间 新→旧</option>
+            <option value="date-asc" data-i18n="lang.sortDateAsc">修改时间 旧→新</option>
+          </select>
+          <span class="count" id="post-count"></span>
+          <button id="btn-new-post-side" class="btn btn-tiny" data-i18n-title="lang.newPost" title="新建文章">+</button>
+        </div>
+        <ul id="post-list" class="file-list"></ul>
+      </div>
+
+      <div id="img-group" class="hidden">
+        <div class="side-title">
+          <span data-i18n="lang.imgLib">图片库</span> <span class="count" id="img-count"></span>
+          <button id="btn-upload-img" class="btn btn-tiny" data-i18n-title="lang.uploadTitle">⬆ <span data-i18n="lang.upload">上传</span></button>
+          <input type="file" id="img-file-input" accept="image/*" hidden>
+        </div>
+        <div id="img-gallery" class="img-gallery"></div>
+      </div>
+    </aside>
+
+    <aside id="meta-pane" class="hidden">
+      <div class="side-title" data-i18n="lang.meta">文章元数据</div>
+      <div id="fm-group" class="hidden">
+        <div class="fm-field">
+          <label data-i18n="lang.title">标题</label>
+          <input type="text" id="fm-title" data-i18n-placeholder="lang.titlePh" placeholder="文章标题">
+        </div>
+        <div class="fm-field">
+          <label data-i18n="lang.date">日期</label>
+          <input type="date" id="fm-date">
+        </div>
+        <div class="fm-field">
+          <label data-i18n="lang.tags">标签（逗号分隔）</label>
+          <input type="text" id="fm-tags" data-i18n-placeholder="lang.tagsPh" placeholder="标签1, 标签2">
+        </div>
+        <button id="fm-apply" class="btn btn-small" data-i18n="lang.apply">应用到文章</button>
+      </div>
+    </aside>
+
+    <section id="editor-pane">
+      <div id="editor-head">
+        <span id="current-file" data-i18n="lang.choosePost">— 选择一篇文章开始编辑 —</span>
+        <span id="dirty-mark" class="hidden" data-i18n="lang.dirty">● 未保存</span>
+        <button id="btn-reload" class="btn-icon" title="重新从磁盘加载（丢弃未保存改动）" data-i18n-title="lang.reload" disabled>⟳</button>
+      </div>
+      <div id="editor-tabs">
+        <button class="tab active" data-tab="edit" data-i18n="lang.edit">编辑</button>
+        <button class="tab" data-tab="preview" data-i18n="lang.preview">预览</button>
+      </div>
+      <div id="tab-edit" class="tab-panel active">
+        <textarea id="editor-textarea" data-i18n-placeholder="lang.mdPh" placeholder="Markdown 内容..."></textarea>
+      </div>
+      <div id="tab-preview" class="tab-panel">
+        <div id="preview-content" class="markdown-body"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="statusbar">
+    <span id="sb-status" data-i18n="lang.ready">就绪</span>
+    <span class="sb-flex"></span>
+    <span id="sb-msg"></span>
+  </footer>
+
+  <!-- 创建博客弹窗 -->
+  <div id="create-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h3 data-i18n="lang.createBlogTitle">创建博客</h3>
+      <p class="modal-hint" data-i18n="lang.createBlogHint">目标目录必须已 <code>git clone</code> 好</p>
+      <label data-i18n="lang.localDir">本地目录名</label>
+      <input type="text" id="cm-dir" data-i18n-placeholder="lang.localDirPh" placeholder="如 travel-blog">
+      <label data-i18n="lang.blogName">博客显示名</label>
+      <input type="text" id="cm-name" data-i18n-placeholder="lang.blogNamePh" placeholder="如 旅行笔记">
+      <label data-i18n="lang.repoUrl">GitHub 仓库地址</label>
+      <input type="text" id="cm-url" placeholder="https://github.com/user/repo">
+      <div class="modal-actions">
+        <button id="cm-cancel" class="btn" data-i18n="lang.cancel">取消</button>
+        <button id="cm-ok" class="btn btn-cta" data-i18n="lang.writeTpl">写入模板</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Push 弹窗 -->
+  <div id="push-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h3 data-i18n="lang.pushTitle">Push 到 GitHub</h3>
+      <label data-i18n="lang.commitMsg">Commit message</label>
+      <input type="text" id="push-msg" data-i18n-placeholder="lang.commitMsgPh" placeholder="update">
+      <div class="modal-actions">
+        <button id="push-cancel" class="btn" data-i18n="lang.cancel">取消</button>
+        <button id="push-ok" class="btn btn-cta" data-i18n="lang.commitPush">Commit + Push</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建文章弹窗 -->
+  <div id="newpost-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h3 data-i18n="lang.newPostTitle">新建文章</h3>
+      <label data-i18n="lang.title">标题</label>
+      <input type="text" id="np-title" data-i18n-placeholder="lang.titlePh" placeholder="文章标题">
+      <label data-i18n="lang.date">日期</label>
+      <input type="date" id="np-date">
+      <label data-i18n="lang.tags">标签（逗号分隔）</label>
+      <input type="text" id="np-tags" data-i18n-placeholder="lang.tagsOptional" placeholder="可选">
+      <div class="modal-actions">
+        <button id="np-cancel" class="btn" data-i18n="lang.cancel">取消</button>
+        <button id="np-ok" class="btn btn-cta" data-i18n="lang.create">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/vendor/codemirror.min.js"></script>
+  <script src="/static/vendor/markdown.min.js"></script>
+  <script src="/static/vendor/marked.min.js"></script>
+  <script src="/static/i18n.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

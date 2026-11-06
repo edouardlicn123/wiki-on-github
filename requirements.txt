@@ -1,0 +1,4 @@
+# Blog Editor dependencies
+# 当前仅用 Python 标准库，留空即可
+# 未来如需额外包，在此添加:
+# pyyaml>=6.0

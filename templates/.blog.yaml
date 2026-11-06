@@ -1,0 +1,8 @@
+schema_version: 1
+blog_name: __BLOG_NAME__
+description:
+repo_url: __REPO_URL__
+repo_branch: main
+content_dir: md/
+image_dir: images/
+pages_url:
